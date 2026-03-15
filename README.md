@@ -1,59 +1,163 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MotoPeer
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Ride together. Deliver together.**
 
-## About Laravel
+MotoPeer is a ride- and delivery-matching app. Users can post trips, find trips by pickup and dropoff on a map, chat with each other, and (on the backend) match delivery requests to trips by location.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Layer      | Stack |
+|-----------|--------|
+| **Backend** | Laravel 12, PHP 8.2+, Sanctum (API auth), Reverb (WebSockets) |
+| **Frontend** | Vue 3, Vue Router, Pinia, Vite, Tailwind CSS v4 |
+| **PWA**   | vite-plugin-pwa (offline, installable) |
+| **Maps**  | Google Maps JavaScript API + Places (autocomplete, draggable markers) |
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Auth** – Register, login, logout via API (Sanctum tokens).
+- **Trips** – Post a trip (origin, destination, departure time, vehicle type). Optional map picker for coordinates.
+- **Find trips** – Map with draggable pickup/dropoff markers and Places autocomplete. Search returns trips whose route matches the selected points (Haversine, configurable radius).
+- **Messaging** – Conversation threads and chat; list conversations, send messages, poll for new messages. Optional real-time via Reverb/Pusher.
+- **Delivery matching** – Backend service matches delivery requests to trips by proximity (origin/destination within radius).
+- **PWA** – Installable, offline caching, service worker.
+- **Mobile-friendly** – Touch targets, safe areas, responsive layout, bottom nav.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Requirements
 
-### Premium Partners
+- PHP 8.2+
+- Composer
+- Node.js 18+ and npm
+- MySQL/MariaDB or SQLite (for DB)
+- (Optional) Google Maps API key for map and Find Trips features
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## Installation
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. **Clone and install PHP dependencies**
 
-## Code of Conduct
+   ```bash
+   git clone <repo-url> rolan && cd rolan
+   composer install
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+2. **Environment**
 
-## Security Vulnerabilities
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+   Edit `.env`: set `APP_NAME`, `APP_URL`, and database (`DB_*`). For SQLite:
+
+   ```env
+   DB_CONNECTION=sqlite
+   # leave DB_DATABASE or set to database/database.sqlite
+   ```
+
+   Create the SQLite file if needed:
+
+   ```bash
+   touch database/database.sqlite
+   ```
+
+3. **Migrations and seed**
+
+   ```bash
+   php artisan migrate
+   php artisan db:seed
+   ```
+
+   The seeder creates a sample user (see `DatabaseSeeder`; e.g. `sample@example.com` / `password`).
+
+4. **Frontend**
+
+   ```bash
+   npm install
+   npm run build
+   ```
+
+   For development:
+
+   ```bash
+   npm run dev
+   ```
+
+5. **Serve the app**
+
+   ```bash
+   php artisan serve
+   ```
+
+   Open `http://localhost:8000`. Log in with the seeded user or register a new one.
+
+---
+
+## Environment variables
+
+| Variable | Description |
+|---------|-------------|
+| `APP_NAME`, `APP_URL`, `APP_DEBUG` | Standard Laravel app config. |
+| `DB_*` | Database connection (SQLite or MySQL). |
+| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JS + Places API key. Required for map picker and Find Trips map. |
+| `DELIVERY_MATCH_RADIUS_KM` | Default radius (km) for matching delivery requests to trips (default: 10). |
+| `BROADCAST_CONNECTION` | `log`, `reverb`, or `pusher` for real-time (e.g. chat/delivery notifications). |
+| `REVERB_*` | Used when `BROADCAST_CONNECTION=reverb` for WebSockets. |
+
+---
+
+## Running in development
+
+- **Laravel:** `php artisan serve`
+- **Vite:** `npm run dev` (in another terminal)
+- **Reverb (optional):** `php artisan reverb:start` for WebSocket broadcasting
+- **Queue (optional):** `php artisan queue:work` if using queued jobs
+
+Or use the Composer `dev` script if configured (e.g. server + queue + vite together).
+
+---
+
+## Project structure (overview)
+
+```
+app/
+  Http/Controllers/Api/   # Auth, Trip, Conversation, Message controllers
+  Models/                 # User, Trip, Conversation, Message, DeliveryRequest
+  Services/               # TripMatchService (Haversine matching)
+  Events/                 # MessageSent, DeliveryAccepted (broadcasting)
+  Policies/               # ConversationPolicy
+database/migrations/      # users, trips, conversations, messages, delivery_requests
+resources/
+  js/
+    api/                  # Axios instance (Bearer, 401 handling)
+    components/           # LocationPicker, MapPickupDropoff
+    composables/          # useGoogleMaps, useChatApi
+    layouts/              # AppLayout, BlankLayout
+    router/               # Vue Router + auth guards
+    stores/               # Pinia auth store
+    views/                # Home, Login, Register, CreateTrip, FindTrips, Chat, About
+routes/
+  api.php                 # Auth, trips (index/store/update + search), conversations, messages
+  channels.php            # Broadcasting channel auth (user, conversation)
+```
+
+---
+
+## API (summary)
+
+- **Auth:** `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/user` (Sanctum).
+- **Trips:** `GET /api/trips` (my trips), `POST /api/trips`, `PUT/PATCH /api/trips/{id}` (auth). `GET /api/trips/search?pickup_lat=&pickup_lng=&dropoff_lat=&dropoff_lng=&radius_km=` (public).
+- **Messaging:** `GET/POST /api/conversations`, `GET /api/conversations/{id}`, `GET/POST /api/conversations/{id}/messages` (auth).
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT.
