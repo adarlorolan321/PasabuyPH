@@ -1,57 +1,59 @@
 <template>
     <div class="max-w-md mx-auto">
-        <h1 class="text-2xl font-bold mb-6">Log in</h1>
-        <form
-            class="space-y-4"
-            @submit.prevent="handleSubmit"
-        >
-            <div v-if="error" class="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
-                {{ error }}
-            </div>
-            <div>
-                <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email
-                </label>
-                <input
-                    id="login-email"
-                    v-model="form.email"
-                    type="email"
-                    autocomplete="email"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    :disabled="loading"
-                />
-                <p v-if="errors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.email }}</p>
-            </div>
-            <div>
-                <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Password
-                </label>
-                <input
-                    id="login-password"
-                    v-model="form.password"
-                    type="password"
-                    autocomplete="current-password"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    :disabled="loading"
-                />
-                <p v-if="errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.password }}</p>
-            </div>
-            <button
-                type="submit"
-                class="w-full py-2 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                :disabled="loading"
+        <div class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm p-6 sm:p-8">
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">Log in</h1>
+            <form
+                class="space-y-4"
+                @submit.prevent="handleSubmit"
             >
-                {{ loading ? 'Signing in…' : 'Sign in' }}
-            </button>
-        </form>
-        <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?
-            <RouterLink to="/register" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                Register
-            </RouterLink>
-        </p>
+                <div v-if="error" class="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
+                    {{ error }}
+                </div>
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Email
+                    </label>
+                    <input
+                        id="login-email"
+                        v-model="form.email"
+                        type="email"
+                        autocomplete="email"
+                        required
+                        class="w-full px-4 py-3 text-base border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        :disabled="loading"
+                    />
+                    <p v-if="errors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.email }}</p>
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Password
+                    </label>
+                    <input
+                        id="login-password"
+                        v-model="form.password"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                        class="w-full px-4 py-3 text-base border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        :disabled="loading"
+                    />
+                    <p v-if="errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.password }}</p>
+                </div>
+                <button
+                    type="submit"
+                    class="w-full py-3 px-4 text-base bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    :disabled="loading"
+                >
+                    {{ loading ? 'Signing in…' : 'Sign in' }}
+                </button>
+            </form>
+            <p class="mt-6 text-sm text-slate-600 dark:text-slate-400">
+                Don't have an account?
+                <RouterLink to="/register" class="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline py-2 inline-block">
+                    Register
+                </RouterLink>
+            </p>
+        </div>
     </div>
 </template>
 

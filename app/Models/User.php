@@ -55,4 +55,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Trip::class);
     }
+
+    /**
+     * Get messages sent by the user.
+     */
+    public function messages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
 }

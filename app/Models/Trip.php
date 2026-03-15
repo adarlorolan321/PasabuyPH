@@ -15,9 +15,16 @@ class Trip extends Model
     protected $fillable = [
         'user_id',
         'title',
+        'origin',
+        'origin_lat',
+        'origin_lng',
         'destination',
+        'destination_lat',
+        'destination_lng',
         'start_date',
         'end_date',
+        'departure_time',
+        'vehicle_type',
         'notes',
     ];
 
@@ -31,6 +38,7 @@ class Trip extends Model
         return [
             'start_date' => 'date',
             'end_date' => 'date',
+            'departure_time' => 'datetime',
         ];
     }
 

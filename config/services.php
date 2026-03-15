@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'delivery' => [
+        'match_radius_km' => (float) env('DELIVERY_MATCH_RADIUS_KM', 10),
+    ],
+
 ];

@@ -1,87 +1,89 @@
 <template>
     <div class="max-w-md mx-auto">
-        <h1 class="text-2xl font-bold mb-6">Register</h1>
-        <form
-            class="space-y-4"
-            @submit.prevent="handleSubmit"
-        >
-            <div v-if="error" class="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
-                {{ error }}
-            </div>
-            <div>
-                <label for="register-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Name
-                </label>
-                <input
-                    id="register-name"
-                    v-model="form.name"
-                    type="text"
-                    autocomplete="name"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    :disabled="loading"
-                />
-                <p v-if="errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.name }}</p>
-            </div>
-            <div>
-                <label for="register-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email
-                </label>
-                <input
-                    id="register-email"
-                    v-model="form.email"
-                    type="email"
-                    autocomplete="email"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    :disabled="loading"
-                />
-                <p v-if="errors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.email }}</p>
-            </div>
-            <div>
-                <label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Password
-                </label>
-                <input
-                    id="register-password"
-                    v-model="form.password"
-                    type="password"
-                    autocomplete="new-password"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    :disabled="loading"
-                />
-                <p v-if="errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.password }}</p>
-            </div>
-            <div>
-                <label for="register-password-confirm" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Confirm password
-                </label>
-                <input
-                    id="register-password-confirm"
-                    v-model="form.password_confirmation"
-                    type="password"
-                    autocomplete="new-password"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    :disabled="loading"
-                />
-                <p v-if="errors.password_confirmation" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.password_confirmation }}</p>
-            </div>
-            <button
-                type="submit"
-                class="w-full py-2 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                :disabled="loading"
+        <div class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm p-6 sm:p-8">
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">Create account</h1>
+            <form
+                class="space-y-4"
+                @submit.prevent="handleSubmit"
             >
-                {{ loading ? 'Creating account…' : 'Create account' }}
-            </button>
-        </form>
-        <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-            Already have an account?
-            <RouterLink to="/login" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                Log in
-            </RouterLink>
-        </p>
+                <div v-if="error" class="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 text-sm">
+                    {{ error }}
+                </div>
+                <div>
+                    <label for="register-name" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Name
+                    </label>
+                    <input
+                        id="register-name"
+                        v-model="form.name"
+                        type="text"
+                        autocomplete="name"
+                        required
+                        class="w-full px-4 py-3 text-base border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        :disabled="loading"
+                    />
+                    <p v-if="errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.name }}</p>
+                </div>
+                <div>
+                    <label for="register-email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Email
+                    </label>
+                    <input
+                        id="register-email"
+                        v-model="form.email"
+                        type="email"
+                        autocomplete="email"
+                        required
+                        class="w-full px-4 py-3 text-base border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        :disabled="loading"
+                    />
+                    <p v-if="errors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.email }}</p>
+                </div>
+                <div>
+                    <label for="register-password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Password
+                    </label>
+                    <input
+                        id="register-password"
+                        v-model="form.password"
+                        type="password"
+                        autocomplete="new-password"
+                        required
+                        class="w-full px-4 py-3 text-base border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        :disabled="loading"
+                    />
+                    <p v-if="errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.password }}</p>
+                </div>
+                <div>
+                    <label for="register-password-confirm" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Confirm password
+                    </label>
+                    <input
+                        id="register-password-confirm"
+                        v-model="form.password_confirmation"
+                        type="password"
+                        autocomplete="new-password"
+                        required
+                        class="w-full px-4 py-3 text-base border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        :disabled="loading"
+                    />
+                    <p v-if="errors.password_confirmation" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.password_confirmation }}</p>
+                </div>
+                <button
+                    type="submit"
+                    class="w-full py-3 px-4 text-base bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    :disabled="loading"
+                >
+                    {{ loading ? 'Creating account…' : 'Create account' }}
+                </button>
+            </form>
+            <p class="mt-6 text-sm text-slate-600 dark:text-slate-400">
+                Already have an account?
+                <RouterLink to="/login" class="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline py-2 inline-block">
+                    Log in
+                </RouterLink>
+            </p>
+        </div>
     </div>
 </template>
 

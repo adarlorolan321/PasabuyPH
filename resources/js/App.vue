@@ -1,19 +1,24 @@
 <template>
-    <div id="app" class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <AppLayout>
+    <div id="app" class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+        <component :is="layoutComponent">
             <RouterView v-slot="{ Component }">
                 <transition name="fade" mode="out-in">
                     <component :is="Component" />
                 </transition>
             </RouterView>
-        </AppLayout>
+        </component>
     </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import AppLayout from '@/layouts/AppLayout.vue';
+import BlankLayout from '@/layouts/BlankLayout.vue';
 import { useAuthStore } from '@/stores/authStore';
+
+const route = useRoute();
+const layoutComponent = computed(() => (route.meta.blankLayout ? BlankLayout : AppLayout));
 
 const authStore = useAuthStore();
 
