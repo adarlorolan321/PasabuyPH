@@ -26,6 +26,7 @@ Route::prefix('auth')->middleware('throttle:60,1')->group(function () {
     });
 });
 
+Route::get('trips/search', [TripController::class, 'search']);
 Route::middleware('auth:sanctum')->apiResource('trips', TripController::class)->only(['index', 'store', 'update']);
 
 /*

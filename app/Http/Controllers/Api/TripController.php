@@ -4,11 +4,49 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Trip;
+use App\Services\TripMatchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TripController extends Controller
 {
+    /**
+     * Search trips by pickup and dropoff coordinates (public, for Find Trips).
+     */
+    public function search(Request $request, TripMatchService $tripMatch): JsonResponse
+    {
+        $validated = $request->validate([
+            'pickup_lat' => ['required', 'numeric', 'between:-90,90'],
+            'pickup_lng' => ['required', 'numeric', 'between:-180,180'],
+            'dropoff_lat' => ['required', 'numeric', 'between:-90,90'],
+            'dropoff_lng' => ['required', 'numeric', 'between:-180,180'],
+            'radius_km' => ['nullable', 'numeric', 'min:1', 'max:500'],
+        ]);
+
+        $radiusKm = isset($validated['radius_km']) ? (float) $validated['radius_km'] : null;
+        $trips = $tripMatch->findTripsByCoordinates(
+            (float) $validated['pickup_lat'],
+            (float) $validated['pickup_lng'],
+            (float) $validated['dropoff_lat'],
+            (float) $validated['dropoff_lng'],
+            $radiusKm
+        );
+
+        $data = $trips->map(fn (Trip $trip) => [
+            'id' => $trip->id,
+            'origin' => $trip->origin,
+            'destination' => $trip->destination,
+            'departure_time' => $trip->departure_time?->toIso8601String(),
+            'vehicle_type' => $trip->vehicle_type,
+            'user' => $trip->relationLoaded('user') ? [
+                'id' => $trip->user->id,
+                'name' => $trip->user->name,
+            ] : null,
+        ])->values();
+
+        return response()->json(['data' => $data]);
+    }
+
     /**
      * List trips for the authenticated user.
      */

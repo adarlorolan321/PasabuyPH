@@ -114,6 +114,73 @@ class TripMatchService
     }
 
     /**
+     * Find trips matching pickup and dropoff coordinates (for "Find Trips" search).
+     * Returns trips whose origin is near the pickup point and destination near the dropoff point.
+     *
+     * @param  float  $pickupLat
+     * @param  float  $pickupLng
+     * @param  float  $dropoffLat
+     * @param  float  $dropoffLng
+     * @param  float|null  $radiusKm
+     * @return Collection<int, Trip>
+     */
+    public function findTripsByCoordinates(float $pickupLat, float $pickupLng, float $dropoffLat, float $dropoffLng, ?float $radiusKm = null): Collection
+    {
+        $radiusKm ??= (float) config('services.delivery.match_radius_km', 10);
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
+            return $this->matchTripsByCoordsMysql($pickupLat, $pickupLng, $dropoffLat, $dropoffLng, $radiusKm);
+        }
+
+        return $this->matchTripsByCoordsPhp($pickupLat, $pickupLng, $dropoffLat, $dropoffLng, $radiusKm);
+    }
+
+    protected function matchTripsByCoordsMysql(float $pickupLat, float $pickupLng, float $dropoffLat, float $dropoffLng, float $radiusKm): Collection
+    {
+        return Trip::query()
+            ->whereNotNull('origin_lat')
+            ->whereNotNull('origin_lng')
+            ->whereNotNull('destination_lat')
+            ->whereNotNull('destination_lng')
+            ->whereRaw(
+                '(6371 * acos(least(1, greatest(-1,
+                    cos(radians(?)) * cos(radians(origin_lat)) * cos(radians(origin_lng) - radians(?))
+                    + sin(radians(?)) * sin(radians(origin_lat))
+                )))) <= ?',
+                [$pickupLat, $pickupLng, $pickupLat, $radiusKm]
+            )
+            ->whereRaw(
+                '(6371 * acos(least(1, greatest(-1,
+                    cos(radians(?)) * cos(radians(destination_lat)) * cos(radians(destination_lng) - radians(?))
+                    + sin(radians(?)) * sin(radians(destination_lat))
+                )))) <= ?',
+                [$dropoffLat, $dropoffLng, $dropoffLat, $radiusKm]
+            )
+            ->with('user:id,name,email')
+            ->orderBy('departure_time')
+            ->get();
+    }
+
+    protected function matchTripsByCoordsPhp(float $pickupLat, float $pickupLng, float $dropoffLat, float $dropoffLng, float $radiusKm): Collection
+    {
+        $trips = Trip::query()
+            ->whereNotNull('origin_lat')
+            ->whereNotNull('origin_lng')
+            ->whereNotNull('destination_lat')
+            ->whereNotNull('destination_lng')
+            ->with('user:id,name,email')
+            ->orderBy('departure_time')
+            ->get();
+
+        return $trips->filter(function (Trip $trip) use ($pickupLat, $pickupLng, $dropoffLat, $dropoffLng, $radiusKm) {
+            $originKm = $this->haversineDistanceKm($pickupLat, $pickupLng, (float) $trip->origin_lat, (float) $trip->origin_lng);
+            $destKm = $this->haversineDistanceKm($dropoffLat, $dropoffLng, (float) $trip->destination_lat, (float) $trip->destination_lng);
+            return $originKm <= $radiusKm && $destKm <= $radiusKm;
+        })->values();
+    }
+
+    /**
      * Find trips near a single point (e.g. for "trips near me").
      *
      * @param  float  $lat

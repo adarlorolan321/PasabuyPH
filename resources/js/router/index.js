@@ -33,6 +33,12 @@ const routes = [
         meta: { title: 'Post a trip', requiresAuth: true },
     },
     {
+        path: '/trips/find',
+        name: 'trips.find',
+        component: () => import('@/views/FindTripsView.vue'),
+        meta: { title: 'Find trips' },
+    },
+    {
         path: '/chat/:conversationId?',
         name: 'chat',
         component: () => import('@/views/ChatView.vue'),
