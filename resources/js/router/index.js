@@ -39,6 +39,18 @@ const routes = [
         meta: { title: 'Find trips' },
     },
     {
+        path: '/requests/new',
+        name: 'trip.request.new',
+        component: () => import('@/views/TripRequestView.vue'),
+        meta: { title: 'Post request', requiresAuth: true },
+    },
+    {
+        path: '/feed',
+        name: 'feed',
+        component: () => import('@/views/TripFeedView.vue'),
+        meta: { title: 'Feed', requiresAuth: true },
+    },
+    {
         path: '/chat/:conversationId?',
         name: 'chat',
         component: () => import('@/views/ChatView.vue'),

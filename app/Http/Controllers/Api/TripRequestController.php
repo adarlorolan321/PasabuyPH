@@ -18,37 +18,48 @@ class TripRequestController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'trip_id' => ['required', 'integer', 'exists:trips,id'],
+            'trip_id' => ['nullable', 'integer', 'exists:trips,id'],
             'type' => ['required', 'string', 'in:ride,parcel,food'],
             'pickup_location' => ['required', 'string', 'max:255'],
+            'pickup_lat' => ['nullable', 'numeric'],
+            'pickup_lng' => ['nullable', 'numeric'],
             'dropoff_location' => ['nullable', 'string', 'max:255'],
+            'dropoff_lat' => ['nullable', 'numeric'],
+            'dropoff_lng' => ['nullable', 'numeric'],
             'details' => ['nullable', 'string'],
             'price_offer' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $trip = Trip::findOrFail($validated['trip_id']);
+        $trip = null;
+        if (! empty($validated['trip_id'])) {
+            $trip = Trip::findOrFail($validated['trip_id']);
 
-        // Ensure request type is allowed by trip's services
-        $services = $trip->services ?? [];
-        if (! in_array($validated['type'], $services, true)) {
-            return response()->json([
-                'message' => 'This trip does not accept that type of request.',
-            ], 422);
-        }
+            // Ensure request type is allowed by trip's services
+            $services = $trip->services ?? [];
+            if (! in_array($validated['type'], $services, true)) {
+                return response()->json([
+                    'message' => 'This trip does not accept that type of request.',
+                ], 422);
+            }
 
-        // Prevent owner from requesting their own trip
-        if ((int) $trip->user_id === (int) $user->id) {
-            return response()->json([
-                'message' => 'You cannot request your own trip.',
-            ], 422);
+            // Prevent owner from requesting their own trip
+            if ((int) $trip->user_id === (int) $user->id) {
+                return response()->json([
+                    'message' => 'You cannot request your own trip.',
+                ], 422);
+            }
         }
 
         $requestModel = TripRequest::create([
-            'trip_id' => $trip->id,
+            'trip_id' => $trip?->id,
             'requester_id' => $user->id,
             'type' => $validated['type'],
             'pickup_location' => $validated['pickup_location'],
+            'pickup_lat' => $validated['pickup_lat'] ?? null,
+            'pickup_lng' => $validated['pickup_lng'] ?? null,
             'dropoff_location' => $validated['dropoff_location'] ?? null,
+            'dropoff_lat' => $validated['dropoff_lat'] ?? null,
+            'dropoff_lng' => $validated['dropoff_lng'] ?? null,
             'details' => $validated['details'] ?? null,
             'price_offer' => $validated['price_offer'] ?? null,
             'status' => 'pending',

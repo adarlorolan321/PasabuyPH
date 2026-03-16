@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConversationController;
+use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\TripRequestController;
@@ -31,6 +32,7 @@ Route::get('trips/search', [TripController::class, 'search']);
 Route::get('trips/near', [TripController::class, 'near']);
 Route::get('trips/upcoming', [TripController::class, 'upcoming']);
 Route::middleware('auth:sanctum')->apiResource('trips', TripController::class)->only(['index', 'store', 'update']);
+Route::get('feed', [FeedController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Trip requests

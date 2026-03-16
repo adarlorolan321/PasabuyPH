@@ -61,6 +61,22 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 </span>
             </RouterLink>
+            <RouterLink
+                v-if="authStore.isAuthenticated"
+                to="/requests/new"
+                class="block p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-amber-200 dark:hover:border-amber-800 transition text-left min-h-[44px] flex items-center gap-4"
+            >
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
+                    <span class="text-lg">📦</span>
+                </span>
+                <div class="min-w-0">
+                    <span class="font-semibold text-slate-800 dark:text-slate-100 block">Post a request</span>
+                    <span class="text-sm text-slate-500 dark:text-slate-400">Offer a reward so nearby trips can pick up your ride, parcel, or food.</span>
+                </div>
+                <span class="shrink-0 text-slate-400 dark:text-slate-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </span>
+            </RouterLink>
         </section>
 
         <!-- Promo strip -->
@@ -68,12 +84,19 @@
             <p class="font-semibold text-lg mb-1">Ride together. Deliver together.</p>
             <p class="text-sm text-white/90">Match your trip with others or send parcels on existing routes.</p>
         </section>
+
+        <!-- Trip feed on home page -->
+        <section class="space-y-3">
+            <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Latest activity</h2>
+            <TripFeedView />
+        </section>
     </div>
 </template>
 
 <script setup>
 import { RouterLink } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
+import TripFeedView from '@/views/TripFeedView.vue';
 
 const authStore = useAuthStore();
 </script>

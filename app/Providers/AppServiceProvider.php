@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Trip;
+use App\Models\TripRequest;
+use App\Observers\TripObserver;
+use App\Observers\TripRequestObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Trip::observe(TripObserver::class);
+        TripRequest::observe(TripRequestObserver::class);
     }
 }

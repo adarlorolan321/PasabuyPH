@@ -141,8 +141,10 @@ import { useRouter } from 'vue-router';
 import { RouterLink } from 'vue-router';
 import api from '@/api/axios';
 import LocationPicker from '@/components/LocationPicker.vue';
+import { useFeedStore } from '@/stores/feedStore';
 
 const router = useRouter();
+const feedStore = useFeedStore();
 
 const loading = ref(false);
 const error = ref('');
@@ -206,6 +208,11 @@ async function handleSubmit() {
             vehicle_type: form.vehicle_type,
             services: form.services,
         });
+
+        // Refresh trip feed so the new trip_posted item appears
+        feedStore.reset();
+        feedStore.loadNextPage();
+
         router.push('/');
     } catch (e) {
         const res = e.response?.data;
