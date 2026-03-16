@@ -26,6 +26,7 @@ class Trip extends Model
         'departure_time',
         'vehicle_type',
         'notes',
+        'services',
     ];
 
     /**
@@ -40,6 +41,7 @@ class Trip extends Model
             'origin_lng' => 'float',
             'destination_lat' => 'float',
             'destination_lng' => 'float',
+            'services' => 'array',
             'start_date' => 'date',
             'end_date' => 'date',
             'departure_time' => 'datetime',

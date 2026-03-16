@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\TripController;
+use App\Http\Controllers\Api\TripRequestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,10 +32,16 @@ Route::get('trips/near', [TripController::class, 'near']);
 Route::get('trips/upcoming', [TripController::class, 'upcoming']);
 Route::middleware('auth:sanctum')->apiResource('trips', TripController::class)->only(['index', 'store', 'update']);
 
-/*
-| Messaging: conversation threads and messages.
-*/
 Route::middleware('auth:sanctum')->group(function () {
+    // Trip requests
+    Route::post('trip-requests', [TripRequestController::class, 'store']);
+    Route::post('trip-requests/{tripRequest}/accept', [TripRequestController::class, 'accept']);
+    Route::post('trip-requests/{tripRequest}/reject', [TripRequestController::class, 'reject']);
+    Route::post('trip-requests/{tripRequest}/complete', [TripRequestController::class, 'complete']);
+
+    /*
+    | Messaging: conversation threads and messages.
+    */
     Route::get('conversations', [ConversationController::class, 'index']);
     Route::post('conversations', [ConversationController::class, 'store']);
     Route::get('conversations/{conversation}', [ConversationController::class, 'show']);

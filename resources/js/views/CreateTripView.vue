@@ -84,6 +84,40 @@
                     </select>
                     <p v-if="errors.vehicle_type" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ errors.vehicle_type }}</p>
                 </div>
+                <div>
+                    <p class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Services offered
+                    </p>
+                    <div class="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <label class="flex items-center gap-2">
+                            <input
+                                v-model="form.services"
+                                type="checkbox"
+                                value="ride"
+                                class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <span>Ride sharing</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input
+                                v-model="form.services"
+                                type="checkbox"
+                                value="parcel"
+                                class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <span>Parcel delivery</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input
+                                v-model="form.services"
+                                type="checkbox"
+                                value="food"
+                                class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <span>Food pasabay</span>
+                        </label>
+                    </div>
+                </div>
                 <button
                     type="submit"
                     class="w-full py-3 px-4 text-base bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
@@ -128,6 +162,7 @@ const form = reactive({
     destination_lng: null,
     departure_time: '',
     vehicle_type: '',
+    services: [],
 });
 
 function onPickupSelected(payload) {
@@ -169,6 +204,7 @@ async function handleSubmit() {
             destination_lng: form.destination_lng,
             departure_time: form.departure_time,
             vehicle_type: form.vehicle_type,
+            services: form.services,
         });
         router.push('/');
     } catch (e) {

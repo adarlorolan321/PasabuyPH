@@ -34,7 +34,7 @@
                     :class="selectedTrip && selectedTrip.id === trip.id ? 'ring-2 ring-emerald-500' : ''"
                     @click="selectTrip(trip)"
                 >
-                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
                         <span class="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-medium">
                             {{ trip.vehicle_type || 'Trip' }}
                         </span>
@@ -42,12 +42,34 @@
                             {{ trip.user.name }}
                         </span>
                         <span v-if="trip.departure_time">
-                            {{ formatDate(trip.departure_time) }}
+                            {{ formatTime(trip.departure_time) }}
                         </span>
                     </div>
                     <p class="font-semibold text-slate-800 dark:text-slate-100">
-                        {{ trip.origin }} → {{ trip.destination }}
+                        {{ municipality(trip.origin) }} → {{ municipality(trip.destination) }}
                     </p>
+
+                    <div v-if="trip.services && trip.services.length" class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                        <span class="font-medium">Available:</span>
+                        <span
+                            v-for="service in trip.services"
+                            :key="service"
+                            class="inline-flex items-center gap-1 mr-3"
+                        >
+                            {{ serviceLabel(service) }}
+                        </span>
+                    </div>
+
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <button
+                            v-if="canMessage(trip)"
+                            type="button"
+                            class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600 min-h-[32px]"
+                            @click.stop="messageDriver(trip)"
+                        >
+                            Message driver
+                        </button>
+                    </div>
 
                     <!-- Map preview directly under the selected trip -->
                     <TripMapPreview v-if="selectedTrip && selectedTrip.id === trip.id" :trip="trip" />
@@ -62,18 +84,44 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '@/api/axios';
 import TripMapPreview from '@/components/TripMapPreview.vue';
+import { useAuthStore } from '@/stores/authStore';
+import { useChatApi } from '@/composables/useChatApi';
+
+const router = useRouter();
+const authStore = useAuthStore();
+const { getOrCreateConversation } = useChatApi();
 
 const trips = ref([]);
 const loading = ref(false);
 const error = ref('');
 const selectedTrip = ref(null);
 
-function formatDate(iso) {
+function formatTime(iso) {
     if (!iso) return '';
     const d = new Date(iso);
-    return d.toLocaleDateString([], { dateStyle: 'short' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function municipality(text) {
+    if (!text) return '';
+    return String(text).split(',')[0].trim();
+}
+
+function serviceLabel(service) {
+    const key = String(service || '').toLowerCase();
+    switch (key) {
+        case 'ride':
+            return '🏍 Ride';
+        case 'parcel':
+            return '📦 Parcel';
+        case 'food':
+            return '🍔 Food';
+        default:
+            return service;
+    }
 }
 
 async function loadTrips() {
@@ -97,6 +145,22 @@ async function loadTrips() {
 
 function selectTrip(trip) {
     selectedTrip.value = trip;
+}
+
+function canMessage(trip) {
+    const current = authStore.user;
+    return !!(current && trip.user && trip.user.id && trip.user.id !== current.id);
+}
+
+async function messageDriver(trip) {
+    if (!canMessage(trip)) return;
+    try {
+        const conv = await getOrCreateConversation(trip.user.id);
+        router.push({ name: 'chat', params: { conversationId: String(conv.id) } });
+    } catch (e) {
+        console.error('Failed to start conversation', e);
+        // Keep UX simple here; list still works even if messaging fails.
+    }
 }
 
 onMounted(() => {

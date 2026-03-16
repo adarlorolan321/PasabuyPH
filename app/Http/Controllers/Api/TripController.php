@@ -35,6 +35,7 @@ class TripController extends Controller
             'destination_lng' => $trip->destination_lng,
             'departure_time' => $trip->departure_time?->toIso8601String(),
             'vehicle_type' => $trip->vehicle_type,
+            'services' => $trip->services ?? [],
             'user' => $trip->relationLoaded('user') ? [
                 'id' => $trip->user->id,
                 'name' => $trip->user->name,
@@ -156,6 +157,8 @@ class TripController extends Controller
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'notes' => ['nullable', 'string'],
+            'services' => ['nullable', 'array'],
+            'services.*' => ['string', 'in:ride,parcel,food'],
         ]);
 
         if (empty($validated['title'])) {
@@ -189,6 +192,8 @@ class TripController extends Controller
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'notes' => ['nullable', 'string'],
+            'services' => ['nullable', 'array'],
+            'services.*' => ['string', 'in:ride,parcel,food'],
         ]);
 
         $trip->update($validated);

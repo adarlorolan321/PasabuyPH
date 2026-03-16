@@ -62,31 +62,45 @@ async function init() {
         zoomControl: true,
     });
 
-    originMarker = new google.maps.Marker({
-        map,
-        position: origin,
-        title: 'Origin',
-        icon: {
+    // Icon logic based on vehicle_type (pickup icon)
+    const type = (props.trip.vehicle_type || '').toLowerCase();
+    let originIcon;
+    if (type === 'motorcycle') {
+        originIcon = {
+            url: 'https://maps.google.com/mapfiles/kml/shapes/motorcycling.png',
+            scaledSize: new google.maps.Size(32, 32),
+        };
+    } else if (type === 'car') {
+        originIcon = {
+            url: 'https://maps.google.com/mapfiles/kml/shapes/cabs.png',
+            scaledSize: new google.maps.Size(32, 32),
+        };
+    } else {
+        originIcon = {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 10,
             fillColor: '#22c55e',
             fillOpacity: 1,
             strokeColor: '#fff',
             strokeWeight: 2,
-        },
+        };
+    }
+
+    // Pickup marker
+    originMarker = new google.maps.Marker({
+        map,
+        position: origin,
+        title: 'Origin',
+        icon: originIcon,
     });
 
+    // Dropoff marker: red location pin for all types
     destMarker = new google.maps.Marker({
         map,
         position: dest,
         title: 'Destination',
         icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#ef4444',
-            fillOpacity: 1,
-            strokeColor: '#fff',
-            strokeWeight: 2,
+            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
         },
     });
 
