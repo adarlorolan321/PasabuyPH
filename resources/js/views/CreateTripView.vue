@@ -15,8 +15,8 @@
                 <div class="pb-4 border-b border-slate-200 dark:border-slate-700">
                     <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Pick on map (optional)</p>
                     <LocationPicker
-                        @pickup-selected="form.origin = $event.address"
-                        @dropoff-selected="form.destination = $event.address"
+                        @pickup-selected="onPickupSelected"
+                        @dropoff-selected="onDropoffSelected"
                     />
                 </div>
                 <div>
@@ -121,10 +121,26 @@ const errors = reactive({
 
 const form = reactive({
     origin: '',
+    origin_lat: null,
+    origin_lng: null,
     destination: '',
+    destination_lat: null,
+    destination_lng: null,
     departure_time: '',
     vehicle_type: '',
 });
+
+function onPickupSelected(payload) {
+    form.origin = payload.address;
+    form.origin_lat = payload.lat;
+    form.origin_lng = payload.lng;
+}
+
+function onDropoffSelected(payload) {
+    form.destination = payload.address;
+    form.destination_lat = payload.lat;
+    form.destination_lng = payload.lng;
+}
 
 function setErrors(errs) {
     errors.origin = '';
@@ -146,7 +162,11 @@ async function handleSubmit() {
     try {
         await api.post('/trips', {
             origin: form.origin,
+            origin_lat: form.origin_lat,
+            origin_lng: form.origin_lng,
             destination: form.destination,
+            destination_lat: form.destination_lat,
+            destination_lng: form.destination_lng,
             departure_time: form.departure_time,
             vehicle_type: form.vehicle_type,
         });

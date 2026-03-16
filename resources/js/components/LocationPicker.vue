@@ -48,7 +48,8 @@ let pickupMarker = null;
 let dropoffMarker = null;
 let pickupAutocomplete = null;
 let dropoffAutocomplete = null;
-const defaultCenter = { lat: 40.7128, lng: -74.006 };
+// Default to Manila, Philippines
+const defaultCenter = { lat: 14.5995, lng: 120.9842 };
 const defaultZoom = 10;
 
 function initMap(google) {
@@ -83,6 +84,7 @@ function initMap(google) {
         pickupAutocomplete = new google.maps.places.Autocomplete(pickupInputRef.value, {
             fields: ['geometry', 'formatted_address'],
             types: ['establishment', 'geocode'],
+            componentRestrictions: { country: 'ph' },
         });
         pickupAutocomplete.addListener('place_changed', () => {
             const place = pickupAutocomplete.getPlace();
@@ -109,6 +111,7 @@ function initMap(google) {
         dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInputRef.value, {
             fields: ['geometry', 'formatted_address'],
             types: ['establishment', 'geocode'],
+            componentRestrictions: { country: 'ph' },
         });
         dropoffAutocomplete.addListener('place_changed', () => {
             const place = dropoffAutocomplete.getPlace();

@@ -53,6 +53,7 @@ let dropoffMarker = null;
 let pickupAutocomplete = null;
 let dropoffAutocomplete = null;
 let geocoder = null;
+// Fallback center (Manila, Philippines); overridden by browser geolocation when available
 const defaultCenter = { lat: 14.5995, lng: 120.9842 };
 const defaultZoom = 11;
 
@@ -83,10 +84,10 @@ function updateMapBounds(google) {
     map.fitBounds(bounds, 80);
 }
 
-function initMap(google) {
+function initMap(google, center = defaultCenter) {
     if (!mapRef.value) return;
     map = new google.maps.Map(mapRef.value, {
-        center: defaultCenter,
+        center,
         zoom: defaultZoom,
         mapTypeControl: true,
         streetViewControl: false,
@@ -113,14 +114,14 @@ function initMap(google) {
 
     pickupMarker = new google.maps.Marker({
         map,
-        position: defaultCenter,
+        position: center,
         icon: pickupIcon,
         title: 'Pickup',
         draggable: true,
     });
     dropoffMarker = new google.maps.Marker({
         map,
-        position: { lat: defaultCenter.lat + 0.02, lng: defaultCenter.lng + 0.02 },
+        position: { lat: center.lat + 0.02, lng: center.lng + 0.02 },
         icon: dropoffIcon,
         title: 'Dropoff',
         draggable: true,
@@ -150,6 +151,7 @@ function initMap(google) {
         pickupAutocomplete = new google.maps.places.Autocomplete(pickupInputRef.value, {
             fields: ['geometry', 'formatted_address'],
             types: ['establishment', 'geocode'],
+            componentRestrictions: { country: 'ph' },
         });
         pickupAutocomplete.addListener('place_changed', () => {
             const place = pickupAutocomplete.getPlace();
@@ -168,6 +170,7 @@ function initMap(google) {
         dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInputRef.value, {
             fields: ['geometry', 'formatted_address'],
             types: ['establishment', 'geocode'],
+            componentRestrictions: { country: 'ph' },
         });
         dropoffAutocomplete.addListener('place_changed', () => {
             const place = dropoffAutocomplete.getPlace();
@@ -182,14 +185,33 @@ function initMap(google) {
         });
     }
 
-    emitPickup(defaultCenter.lat, defaultCenter.lng, '');
-    emitDropoff(defaultCenter.lat + 0.02, defaultCenter.lng + 0.02, '');
+    emitPickup(center.lat, center.lng, '');
+    emitDropoff(center.lat + 0.02, center.lng + 0.02, '');
 }
 
 onMounted(async () => {
     try {
         const google = await useGoogleMaps();
-        initMap(google);
+
+        const initWithCenter = (center) => {
+            initMap(google, center || defaultCenter);
+        };
+
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const center = {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude,
+                    };
+                    initWithCenter(center);
+                },
+                () => initWithCenter(),
+                { enableHighAccuracy: true, maximumAge: 600000, timeout: 10000 }
+            );
+        } else {
+            initWithCenter();
+        }
     } catch (e) {
         loadError.value = e.message || 'Google Maps could not be loaded. Add VITE_GOOGLE_MAPS_API_KEY to .env.';
     }

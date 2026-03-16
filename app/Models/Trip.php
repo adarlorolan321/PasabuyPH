@@ -36,6 +36,10 @@ class Trip extends Model
     protected function casts(): array
     {
         return [
+            'origin_lat' => 'float',
+            'origin_lng' => 'float',
+            'destination_lat' => 'float',
+            'destination_lng' => 'float',
             'start_date' => 'date',
             'end_date' => 'date',
             'departure_time' => 'datetime',
