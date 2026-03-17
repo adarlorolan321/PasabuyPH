@@ -84,6 +84,32 @@
                         <p v-if="item.request?.price_offer">
                             💰 Reward: ₱{{ item.request.price_offer }}
                         </p>
+                        <p
+                            v-if="item.request?.estimated_fare && item.request?.price_offer && item.request.estimated_fare > item.request.price_offer"
+                            class="text-[11px] text-amber-600 dark:text-amber-400"
+                        >
+                            💡 Suggested minimum: ₱{{ item.request.estimated_fare }}
+                        </p>
+                        <p v-if="item.type === 'parcel_request' && hasParcelDimensions(item.request)">
+                            📏 Size:
+                            {{ item.request.parcel_length_cm }} ×
+                            {{ item.request.parcel_width_cm }} ×
+                            {{ item.request.parcel_height_cm }} cm
+                        </p>
+                        <p v-if="item.type === 'parcel_request' && item.request?.parcel_weight_kg">
+                            ⚖️ Weight: {{ item.request.parcel_weight_kg }} kg
+                        </p>
+                    </div>
+
+                    <div
+                        v-if="item.type === 'parcel_request' && item.request?.parcel_photo_path"
+                        class="mt-2"
+                    >
+                        <img
+                            :src="parcelPhotoUrl(item.request.parcel_photo_path)"
+                            alt="Parcel photo"
+                            class="h-20 w-20 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+                        />
                     </div>
 
                     <div class="mt-2 flex justify-end">
@@ -167,6 +193,19 @@ function detailsLabel(type) {
         default:
             return 'Details';
     }
+}
+
+function hasParcelDimensions(req) {
+    return (
+        req &&
+        req.parcel_length_cm != null &&
+        req.parcel_width_cm != null &&
+        req.parcel_height_cm != null
+    );
+}
+
+function parcelPhotoUrl(path) {
+    return `/storage/${path}`;
 }
 
 function formatDateTime(iso) {

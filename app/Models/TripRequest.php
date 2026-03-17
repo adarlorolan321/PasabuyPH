@@ -20,6 +20,11 @@ class TripRequest extends Model
         'details',
         'price_offer',
         'status',
+        'parcel_length_cm',
+        'parcel_width_cm',
+        'parcel_height_cm',
+        'parcel_weight_kg',
+        'parcel_photo_path',
     ];
 
     protected $casts = [
@@ -27,6 +32,10 @@ class TripRequest extends Model
         'pickup_lng' => 'float',
         'dropoff_lat' => 'float',
         'dropoff_lng' => 'float',
+        'parcel_length_cm' => 'float',
+        'parcel_width_cm' => 'float',
+        'parcel_height_cm' => 'float',
+        'parcel_weight_kg' => 'float',
     ];
 
     public function trip(): BelongsTo

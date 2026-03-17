@@ -41,13 +41,70 @@
                 />
             </div>
 
-            <div v-else-if="form.type === 'parcel'">
-                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Item description</label>
-                <textarea
-                    v-model="form.details"
-                    rows="2"
-                    class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm"
-                ></textarea>
+            <div v-else-if="form.type === 'parcel'" class="space-y-2">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Item description</label>
+                    <textarea
+                        v-model="form.details"
+                        rows="2"
+                        class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm"
+                    ></textarea>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Length (cm)</label>
+                        <input
+                            v-model.number="form.parcel_length_cm"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            class="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Width (cm)</label>
+                        <input
+                            v-model.number="form.parcel_width_cm"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            class="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Height (cm)</label>
+                        <input
+                            v-model.number="form.parcel_height_cm"
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            class="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Weight (kg)</label>
+                    <input
+                        v-model.number="form.parcel_weight_kg"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        class="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Parcel photo</label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        class="block w-full text-xs text-slate-500 file:mr-2 file:px-2 file:py-1.5 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                        @change="onParcelPhotoChange"
+                    />
+                </div>
             </div>
 
             <div v-else-if="form.type === 'food'">
@@ -108,12 +165,18 @@ const form = reactive({
     dropoff_lng: null,
     details: '',
     price_offer: null,
+    parcel_length_cm: null,
+    parcel_width_cm: null,
+    parcel_height_cm: null,
+    parcel_weight_kg: null,
 });
 
 const extra = reactive({
     passengers: null,
     restaurant: '',
 });
+
+const parcelPhotoFile = ref(null);
 
 function onPickupChanged(payload) {
     form.pickup_location = payload.address;
@@ -127,27 +190,44 @@ function onDropoffChanged(payload) {
     form.dropoff_lng = payload.lng;
 }
 
+function onParcelPhotoChange(event) {
+    const [file] = event.target.files || [];
+    parcelPhotoFile.value = file || null;
+}
+
 async function handleSubmit() {
     error.value = '';
     loading.value = true;
     try {
+        let details = form.details;
         if (form.type === 'ride' && extra.passengers) {
-            form.details = `Passengers: ${extra.passengers}${form.details ? ' - ' + form.details : ''}`;
+            details = `Passengers: ${extra.passengers}${details ? ' - ' + details : ''}`;
         }
         if (form.type === 'food' && extra.restaurant) {
-            form.details = `Restaurant: ${extra.restaurant}${form.details ? ' - ' + form.details : ''}`;
+            details = `Restaurant: ${extra.restaurant}${details ? ' - ' + details : ''}`;
         }
 
-        await api.post('/trip-requests', {
-            type: form.type,
-            pickup_location: form.pickup_location,
-            pickup_lat: form.pickup_lat,
-            pickup_lng: form.pickup_lng,
-            dropoff_location: form.dropoff_location,
-            dropoff_lat: form.dropoff_lat,
-            dropoff_lng: form.dropoff_lng,
-            details: form.details,
-            price_offer: form.price_offer,
+        const fd = new FormData();
+        fd.append('type', form.type);
+        fd.append('pickup_location', form.pickup_location);
+        if (form.pickup_lat != null) fd.append('pickup_lat', String(form.pickup_lat));
+        if (form.pickup_lng != null) fd.append('pickup_lng', String(form.pickup_lng));
+        if (form.dropoff_location) fd.append('dropoff_location', form.dropoff_location);
+        if (form.dropoff_lat != null) fd.append('dropoff_lat', String(form.dropoff_lat));
+        if (form.dropoff_lng != null) fd.append('dropoff_lng', String(form.dropoff_lng));
+        if (details) fd.append('details', details);
+        if (form.price_offer != null) fd.append('price_offer', String(form.price_offer));
+
+        if (form.type === 'parcel') {
+            if (form.parcel_length_cm != null) fd.append('parcel_length_cm', String(form.parcel_length_cm));
+            if (form.parcel_width_cm != null) fd.append('parcel_width_cm', String(form.parcel_width_cm));
+            if (form.parcel_height_cm != null) fd.append('parcel_height_cm', String(form.parcel_height_cm));
+            if (form.parcel_weight_kg != null) fd.append('parcel_weight_kg', String(form.parcel_weight_kg));
+            if (parcelPhotoFile.value) fd.append('parcel_photo', parcelPhotoFile.value);
+        }
+
+        await api.post('/trip-requests', fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
         });
 
         feedStore.reset();
@@ -162,8 +242,13 @@ async function handleSubmit() {
         form.dropoff_lng = null;
         form.details = '';
         form.price_offer = null;
+        form.parcel_length_cm = null;
+        form.parcel_width_cm = null;
+        form.parcel_height_cm = null;
+        form.parcel_weight_kg = null;
         extra.passengers = null;
         extra.restaurant = '';
+        parcelPhotoFile.value = null;
     } catch (e) {
         error.value = e.response?.data?.message || 'Could not post request.';
     } finally {

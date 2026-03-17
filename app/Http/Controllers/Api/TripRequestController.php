@@ -7,6 +7,7 @@ use App\Models\Trip;
 use App\Models\TripRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TripRequestController extends Controller
 {
@@ -28,6 +29,11 @@ class TripRequestController extends Controller
             'dropoff_lng' => ['nullable', 'numeric'],
             'details' => ['nullable', 'string'],
             'price_offer' => ['nullable', 'numeric', 'min:0'],
+            'parcel_length_cm' => ['nullable', 'numeric', 'min:0'],
+            'parcel_width_cm' => ['nullable', 'numeric', 'min:0'],
+            'parcel_height_cm' => ['nullable', 'numeric', 'min:0'],
+            'parcel_weight_kg' => ['nullable', 'numeric', 'min:0'],
+            'parcel_photo' => ['nullable', 'image', 'max:2048'],
         ]);
 
         $trip = null;
@@ -50,6 +56,26 @@ class TripRequestController extends Controller
             }
         }
 
+        $parcelPhotoPath = null;
+        if ($request->hasFile('parcel_photo')) {
+            $parcelPhotoPath = $request->file('parcel_photo')->store('parcel-photos', 'public');
+        }
+
+        $parcelData = [
+            'parcel_length_cm' => null,
+            'parcel_width_cm' => null,
+            'parcel_height_cm' => null,
+            'parcel_weight_kg' => null,
+            'parcel_photo_path' => $parcelPhotoPath,
+        ];
+
+        if ($validated['type'] === 'parcel') {
+            $parcelData['parcel_length_cm'] = $validated['parcel_length_cm'] ?? null;
+            $parcelData['parcel_width_cm'] = $validated['parcel_width_cm'] ?? null;
+            $parcelData['parcel_height_cm'] = $validated['parcel_height_cm'] ?? null;
+            $parcelData['parcel_weight_kg'] = $validated['parcel_weight_kg'] ?? null;
+        }
+
         $requestModel = TripRequest::create([
             'trip_id' => $trip?->id,
             'requester_id' => $user->id,
@@ -63,7 +89,7 @@ class TripRequestController extends Controller
             'details' => $validated['details'] ?? null,
             'price_offer' => $validated['price_offer'] ?? null,
             'status' => 'pending',
-        ]);
+        ] + $parcelData);
 
         return response()->json(['data' => $requestModel->fresh()], 201);
     }
