@@ -45,6 +45,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('trip-requests/{tripRequest}/accept', [TripRequestController::class, 'accept']);
     Route::post('trip-requests/{tripRequest}/reject', [TripRequestController::class, 'reject']);
     Route::post('trip-requests/{tripRequest}/complete', [TripRequestController::class, 'complete']);
+    Route::post('trip-requests/{tripRequest}/cancel-by-customer', [TripRequestController::class, 'cancelByCustomer']);
+    Route::post('trip-requests/{tripRequest}/cancel-by-driver', [TripRequestController::class, 'cancelByDriver']);
 
     // Tips: post-trip tipping for completed trips
     Route::post('trips/{trip}/tip', [TipController::class, 'store']);

@@ -24,7 +24,10 @@
             <article
                 v-for="item in items"
                 :key="itemKey(item)"
-                class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm p-4 space-y-2"
+                :class="[
+                    'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm p-4 space-y-2',
+                    item.request?.status === 'expired' ? 'opacity-60' : ''
+                ]"
             >
                 <!-- Trip posted -->
                 <template v-if="item.type === 'trip_posted'">
@@ -65,9 +68,20 @@
                         <p class="font-semibold text-slate-800 dark:text-slate-100">
                             {{ requestTitle(item.type) }}
                         </p>
-                        <p class="text-[11px] text-slate-400 dark:text-slate-500">
-                            {{ formatRelative(item.created_at) }}
-                        </p>
+                        <div class="flex items-center gap-2">
+                            <span
+                                v-if="item.request?.status"
+                                :class="[
+                                    'px-2 py-0.5 rounded-full text-[10px] font-semibold',
+                                    statusMeta(item.request.status).cls
+                                ]"
+                            >
+                                {{ statusMeta(item.request.status).label }}
+                            </span>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500">
+                                {{ formatRelative(item.created_at) }}
+                            </p>
+                        </div>
                     </div>
                     <p class="text-sm text-slate-700 dark:text-slate-200">
                         <span class="mr-1">📍</span>
@@ -315,6 +329,43 @@ function surgePercent(req) {
 function fareAdjustmentLabel(req) {
     if (!req || !req.fare_breakdown) return '';
     return req.fare_breakdown.adjustment_label || '';
+}
+
+function statusMeta(status) {
+    const s = String(status || '').toLowerCase();
+    switch (s) {
+        case 'pending':
+            return {
+                label: 'Pending',
+                cls: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+            };
+        case 'accepted':
+            return {
+                label: 'Accepted',
+                cls: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
+            };
+        case 'completed':
+            return {
+                label: 'Completed',
+                cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+            };
+        case 'cancelled_by_customer':
+        case 'cancelled_by_driver':
+            return {
+                label: 'Cancelled',
+                cls: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+            };
+        case 'expired':
+            return {
+                label: 'Expired',
+                cls: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+            };
+        default:
+            return {
+                label: s || 'Pending',
+                cls: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+            };
+    }
 }
 
 function formatDateTime(iso) {

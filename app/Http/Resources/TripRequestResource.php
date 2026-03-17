@@ -52,6 +52,9 @@ class TripRequestResource extends JsonResource
             'details' => $this->details,
             'price_offer' => $this->price_offer,
             'status' => $this->status,
+            'expires_at' => $this->expires_at?->toIso8601String(),
+            'is_expired' => $this->status === \App\Models\TripRequest::STATUS_EXPIRED
+                || ($this->expires_at && $this->expires_at->isPast()),
             'created_at' => $this->created_at?->toIso8601String(),
             'estimated_fare' => $fareCalculator->estimateForRequest($this->resource),
             'fare_breakdown' => $fareBreakdown,

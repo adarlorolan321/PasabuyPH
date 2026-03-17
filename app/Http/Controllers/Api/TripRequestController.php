@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Trip;
 use App\Models\TripRequest;
 use App\Services\FareCalculator;
+use App\Services\CancellationLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -57,6 +58,22 @@ class TripRequestController extends Controller
             }
         }
 
+        // Limit active pending/accepted requests per user
+        $maxActive = (int) config('request.max_active_pending', 3);
+        $activeCount = TripRequest::query()
+            ->where('requester_id', $user->id)
+            ->whereIn('status', [TripRequest::STATUS_PENDING, TripRequest::STATUS_ACCEPTED])
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->count();
+
+        if ($activeCount >= $maxActive) {
+            return response()->json([
+                'message' => 'You already have active requests. Please wait or cancel existing ones.',
+            ], 422);
+        }
+
         $parcelPhotoPath = null;
         if ($request->hasFile('parcel_photo')) {
             $parcelPhotoPath = $request->file('parcel_photo')->store('parcel-photos', 'public');
@@ -89,7 +106,10 @@ class TripRequestController extends Controller
             'dropoff_lng' => $validated['dropoff_lng'] ?? null,
             'details' => $validated['details'] ?? null,
             'price_offer' => $validated['price_offer'] ?? null,
-            'status' => 'pending',
+            'status' => TripRequest::STATUS_PENDING,
+            'expires_at' => now()->addMinutes(
+                (int) config('request.expiry_minutes', 15)
+            ),
         ] + $parcelData);
 
         // Enforce minimum fare: price_offer must not be less than estimated fare
@@ -105,30 +125,45 @@ class TripRequestController extends Controller
     public function accept(Request $request, TripRequest $tripRequest): JsonResponse
     {
         $this->authorizeOwner($request, $tripRequest);
-        if ($tripRequest->status !== 'pending') {
-            return response()->json(['message' => 'Only pending requests can be accepted.'], 422);
-        }
-        $tripRequest->update(['status' => 'accepted']);
+        $tripRequest->transitionTo(TripRequest::STATUS_ACCEPTED);
         return response()->json(['data' => $tripRequest->fresh()]);
     }
 
     public function reject(Request $request, TripRequest $tripRequest): JsonResponse
     {
         $this->authorizeOwner($request, $tripRequest);
-        if ($tripRequest->status !== 'pending') {
-            return response()->json(['message' => 'Only pending requests can be rejected.'], 422);
-        }
-        $tripRequest->update(['status' => 'rejected']);
+        $tripRequest->transitionTo(TripRequest::STATUS_REJECTED);
         return response()->json(['data' => $tripRequest->fresh()]);
     }
 
     public function complete(Request $request, TripRequest $tripRequest): JsonResponse
     {
         $this->authorizeOwner($request, $tripRequest);
-        if (! in_array($tripRequest->status, ['accepted'], true)) {
-            return response()->json(['message' => 'Only accepted requests can be completed.'], 422);
+        $tripRequest->transitionTo(TripRequest::STATUS_COMPLETED);
+        return response()->json(['data' => $tripRequest->fresh()]);
+    }
+
+    public function cancelByCustomer(Request $request, TripRequest $tripRequest, CancellationLogger $logger): JsonResponse
+    {
+        if ((int) $tripRequest->requester_id !== (int) $request->user()->id) {
+            abort(403);
         }
-        $tripRequest->update(['status' => 'completed']);
+
+        $tripRequest->transitionTo(TripRequest::STATUS_CANCELLED_BY_CUSTOMER);
+
+        $logger->logCancellation($tripRequest, 'customer', $request->input('reason'));
+
+        return response()->json(['data' => $tripRequest->fresh()]);
+    }
+
+    public function cancelByDriver(Request $request, TripRequest $tripRequest, CancellationLogger $logger): JsonResponse
+    {
+        $this->authorizeOwner($request, $tripRequest);
+
+        $tripRequest->transitionTo(TripRequest::STATUS_CANCELLED_BY_DRIVER);
+
+        $logger->logCancellation($tripRequest, 'driver', $request->input('reason'));
+
         return response()->json(['data' => $tripRequest->fresh()]);
     }
 
