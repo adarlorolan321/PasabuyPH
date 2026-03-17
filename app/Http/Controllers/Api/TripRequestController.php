@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Trip;
 use App\Models\TripRequest;
+use App\Services\FareCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +15,7 @@ class TripRequestController extends Controller
     /**
      * Create a new trip request.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, FareCalculator $fareCalculator): JsonResponse
     {
         $user = $request->user();
 
@@ -90,6 +91,13 @@ class TripRequestController extends Controller
             'price_offer' => $validated['price_offer'] ?? null,
             'status' => 'pending',
         ] + $parcelData);
+
+        // Enforce minimum fare: price_offer must not be less than estimated fare
+        $estimated = $fareCalculator->estimateForRequest($requestModel);
+        if ($estimated !== null && ($requestModel->price_offer === null || $requestModel->price_offer < $estimated)) {
+            $requestModel->price_offer = $estimated;
+            $requestModel->save();
+        }
 
         return response()->json(['data' => $requestModel->fresh()], 201);
     }

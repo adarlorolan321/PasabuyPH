@@ -81,14 +81,45 @@
                         <p v-if="item.request?.details">
                             {{ detailsLabel(item.type) }}: {{ item.request.details }}
                         </p>
-                        <p v-if="item.request?.price_offer">
-                            💰 Reward: ₱{{ item.request.price_offer }}
+                        <p v-if="item.request?.estimated_fare">
+                            📏 Minimum fare for distance: ₱{{ item.request.estimated_fare }}
+                        </p>
+                        <p v-if="item.request && (item.request.price_offer || item.request.estimated_fare)">
+                            💰 Reward shown to riders: ₱{{ rewardAmount(item.request) }}
                         </p>
                         <p
-                            v-if="item.request?.estimated_fare && item.request?.price_offer && item.request.estimated_fare > item.request.price_offer"
+                            v-if="fareDistanceKm(item.request) !== null"
+                            class="text-[11px]"
+                        >
+                            📍 Distance: {{ fareDistanceKm(item.request)?.toFixed(1) }} km
+                        </p>
+                        <p
+                            v-if="
+                                item.request &&
+                                item.request.estimated_fare &&
+                                item.request.price_offer &&
+                                item.request.price_offer < item.request.estimated_fare
+                            "
                             class="text-[11px] text-amber-600 dark:text-amber-400"
                         >
-                            💡 Suggested minimum: ₱{{ item.request.estimated_fare }}
+                            💡 Customer offer was ₱{{ item.request.price_offer }}, raised to minimum ₱{{
+                                item.request.estimated_fare
+                            }}.
+                        </p>
+                        <p
+                            v-if="fareDistanceKm(item.request) !== null && fareDistanceKm(item.request) > 50"
+                            class="text-[11px] text-amber-600 dark:text-amber-400"
+                        >
+                            Trips over 50km may require higher offers to attract riders.
+                        </p>
+                        <p
+                            v-if="fareMultiplier(item.request) > 1"
+                            class="text-[11px] text-amber-600 dark:text-amber-400"
+                        >
+                            Busy time: fares include a {{ surgePercent(item.request) }}% peak adjustment
+                            <span v-if="fareAdjustmentLabel(item.request)">
+                                ({{ fareAdjustmentLabel(item.request) }})
+                            </span>
                         </p>
                         <p v-if="item.type === 'parcel_request' && hasParcelDimensions(item.request)">
                             📏 Size:
@@ -112,14 +143,59 @@
                         />
                     </div>
 
-                    <div class="mt-2 flex justify-end">
-                        <button
-                            type="button"
-                            class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600"
+                    <div class="mt-2 flex justify-between items-center gap-2">
+                        <div
+                            v-if="item.request?.status === 'completed' && item.request?.trip_id"
+                            class="flex items-center gap-1"
                         >
-                            Accept Request
-                        </button>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 mr-1">
+                                Tip your rider:
+                            </span>
+                            <button
+                                v-for="amount in tipOptions"
+                                :key="amount"
+                                type="button"
+                                class="px-2 py-1 rounded-full border border-emerald-500 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/40 hover:bg-emerald-100"
+                                :disabled="sendingTip"
+                                @click="sendTip(item.request.trip_id, amount)"
+                            >
+                                ₱{{ amount }}
+                            </button>
+                        </div>
+                        <div class="flex justify-end flex-1">
+                            <button
+                                type="button"
+                                class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600"
+                            >
+                                {{ item.request?.status === 'completed' ? 'Completed' : 'Accept Request' }}
+                            </button>
+                        </div>
                     </div>
+
+                    <details
+                        v-if="item.request?.fare_breakdown"
+                        class="mt-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
+                    >
+                        <summary class="cursor-pointer select-none font-semibold text-slate-700 dark:text-slate-200">
+                            How pricing works
+                        </summary>
+                        <div class="mt-1 space-y-0.5">
+                            <p>Base fare: ₱{{ item.request.fare_breakdown.base_fare.toFixed(0) }}</p>
+                            <p>Per km: ₱{{ item.request.fare_breakdown.per_km_rate.toFixed(0) }}</p>
+                            <p>Distance: {{ item.request.fare_breakdown.distance.toFixed(1) }} km</p>
+                            <p>Computed fare: ₱{{ item.request.fare_breakdown.computed_fare.toFixed(0) }}</p>
+                            <p>Minimum fare: ₱{{ item.request.fare_breakdown.minimum_fare.toFixed(0) }}</p>
+                            <p v-if="item.request.fare_breakdown.multiplier && item.request.fare_breakdown.multiplier !== 1">
+                                Multiplier: ×{{ item.request.fare_breakdown.multiplier.toFixed(2) }}
+                                <span v-if="item.request.fare_breakdown.adjustment_label">
+                                    ({{ item.request.fare_breakdown.adjustment_label }})
+                                </span>
+                            </p>
+                            <p class="font-semibold">
+                                Final fare: ₱{{ item.request.fare_breakdown.final_fare.toFixed(0) }}
+                            </p>
+                        </div>
+                    </details>
                 </template>
             </article>
         </div>
@@ -135,12 +211,15 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import api from '@/api/axios';
 import { useFeedStore } from '@/stores/feedStore';
 
 const feedStore = useFeedStore();
 const { items, loading, error, loadNextPage, reset } = feedStore;
 
 const sentinelRef = ref(null);
+const sendingTip = ref(false);
+const tipOptions = [10, 20, 50];
 let observer = null;
 
 function municipality(text) {
@@ -208,6 +287,36 @@ function parcelPhotoUrl(path) {
     return `/storage/${path}`;
 }
 
+function rewardAmount(req) {
+    if (!req) return '';
+    const offer = req.price_offer ?? 0;
+    const est = req.estimated_fare ?? 0;
+    const value = Math.max(offer, est);
+    return value.toFixed(0);
+}
+
+function fareDistanceKm(req) {
+    if (!req || !req.fare_breakdown || req.fare_breakdown.distance == null) return null;
+    return Number(req.fare_breakdown.distance);
+}
+
+function fareMultiplier(req) {
+    if (!req || !req.fare_breakdown) return 1;
+    const m = Number(req.fare_breakdown.multiplier ?? 1);
+    return m || 1;
+}
+
+function surgePercent(req) {
+    const m = fareMultiplier(req);
+    if (m <= 1) return 0;
+    return Math.round((m - 1) * 100);
+}
+
+function fareAdjustmentLabel(req) {
+    if (!req || !req.fare_breakdown) return '';
+    return req.fare_breakdown.adjustment_label || '';
+}
+
 function formatDateTime(iso) {
     if (!iso) return '';
     const d = new Date(iso);
@@ -247,6 +356,21 @@ function itemKey(item) {
 function refresh() {
     reset();
     loadNextPage();
+}
+
+async function sendTip(tripId, amount) {
+    if (!tripId || sendingTip.value) return;
+    sendingTip.value = true;
+    try {
+        await api.post(`/trips/${tripId}/tip`, { amount });
+        // Lightweight confirmation; feed will reflect indirectly if needed
+        alert('Tip sent successfully');
+    } catch (e) {
+        const msg = e.response?.data?.message || 'Could not send tip.';
+        alert(msg);
+    } finally {
+        sendingTip.value = false;
+    }
 }
 
 onMounted(() => {

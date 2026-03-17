@@ -7,6 +7,16 @@ use App\Support\Geo;
 
 class FareCalculator
 {
+    /**
+     * @var \App\Services\FareService
+     */
+    protected $fareService;
+
+    public function __construct(FareService $fareService)
+    {
+        $this->fareService = $fareService;
+    }
+
     public function estimateForRequest(TripRequest $request): ?float
     {
         if (
@@ -25,13 +35,17 @@ class FareCalculator
             $request->dropoff_lng
         );
 
-        $config = $this->configForType($request->type);
+        $typeConfig = $this->configForType($request->type);
 
-        $raw = $config['base'] + $distanceKm * $config['per_km'];
-        $fare = max($config['min'], $raw);
+        $breakdown = $this->fareService->calculate(
+            distanceKm: $distanceKm,
+            baseFare: $typeConfig['base'],
+            perKmRate: $typeConfig['per_km'],
+            minimumFare: $typeConfig['min'],
+        );
 
-        // Round up to nearest 5 pesos
-        return ceil($fare / 5) * 5;
+        // Preserve existing behaviour: just return rounded final fare.
+        return (float) $breakdown['final_fare'];
     }
 
     protected function configForType(string $type): array

@@ -3,9 +3,11 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\FeedController;
+use App\Http\Controllers\Api\FareController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\TripRequestController;
+use App\Http\Controllers\Api\TipController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,11 +37,17 @@ Route::middleware('auth:sanctum')->apiResource('trips', TripController::class)->
 Route::get('feed', [FeedController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Fare estimation
+    Route::post('fare/estimate', [FareController::class, 'estimate']);
+
     // Trip requests
     Route::post('trip-requests', [TripRequestController::class, 'store']);
     Route::post('trip-requests/{tripRequest}/accept', [TripRequestController::class, 'accept']);
     Route::post('trip-requests/{tripRequest}/reject', [TripRequestController::class, 'reject']);
     Route::post('trip-requests/{tripRequest}/complete', [TripRequestController::class, 'complete']);
+
+    // Tips: post-trip tipping for completed trips
+    Route::post('trips/{trip}/tip', [TipController::class, 'store']);
 
     /*
     | Messaging: conversation threads and messages.

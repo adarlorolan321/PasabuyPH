@@ -122,15 +122,54 @@
                 ></textarea>
             </div>
 
-            <div>
-                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Reward (₱)</label>
-                <input
-                    v-model.number="form.price_offer"
-                    type="number"
-                    min="0"
-                    step="1"
-                    class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm"
-                />
+            <div class="space-y-1">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            Reward (₱)
+                        </label>
+                        <input
+                            v-model.number="form.price_offer"
+                            type="number"
+                            min="0"
+                            step="1"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm"
+                        />
+                    </div>
+                    <details class="text-[11px] text-slate-500 dark:text-slate-400 ml-2 min-w-[120px]">
+                        <summary class="cursor-pointer select-none font-medium">
+                            How pricing works
+                        </summary>
+                        <p class="mt-1">
+                            We start from a base fare, add a per‑km rate based on distance, then apply a minimum fare
+                            and any busy‑time multiplier.
+                        </p>
+                    </details>
+                </div>
+                <p v-if="estimatedFare !== null" class="text-[11px] text-slate-500 dark:text-slate-400">
+                    Minimum fare for this distance:
+                    <span class="font-semibold">₱{{ estimatedFare }}</span>
+                </p>
+                <p
+                    v-if="estimatedFare !== null"
+                    class="text-[11px] text-slate-600 dark:text-slate-300"
+                >
+                    You will likely pay around
+                    <span class="font-semibold">₱{{ totalToPay }}</span>
+                    (minimum fare + any extra reward you set).
+                </p>
+                <p
+                    v-if="distanceKm !== null && distanceKm > 50"
+                    class="text-[11px] text-amber-600 dark:text-amber-400"
+                >
+                    Trips over 50km may require higher offers to attract riders.
+                </p>
+                <p
+                    v-if="surgeMultiplierNotice"
+                    class="text-[11px] text-amber-600 dark:text-amber-400"
+                >
+                    {{ surgeMultiplierNotice }}
+                </p>
             </div>
 
             <button
@@ -141,11 +180,74 @@
                 {{ loading ? 'Posting…' : 'Post request' }}
             </button>
         </form>
+
+        <div
+            v-if="form.type && form.pickup_location"
+            class="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-4 space-y-2"
+        >
+            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                How this will look in the feed
+            </p>
+            <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {{ previewTitle }}
+            </p>
+            <p class="text-sm text-slate-700 dark:text-slate-200">
+                <span class="mr-1">📍</span>
+                {{ form.pickup_location }}
+                <span v-if="form.dropoff_location">
+                    <span class="mx-1">→</span>
+                    {{ form.dropoff_location }}
+                </span>
+            </p>
+            <p v-if="form.details" class="text-xs text-slate-600 dark:text-slate-300">
+                {{ form.details }}
+            </p>
+            <p v-if="estimatedFare !== null" class="text-xs text-slate-600 dark:text-slate-300">
+                📏 Minimum fare for distance: ₱{{ estimatedFare }}
+            </p>
+            <p v-if="totalToPay !== null" class="text-xs text-slate-600 dark:text-slate-300">
+                💰 Reward shown to riders: ₱{{ totalToPay }}
+            </p>
+            <p
+                v-if="distanceKm !== null"
+                class="text-[11px] text-slate-500 dark:text-slate-400"
+            >
+                Distance: {{ distanceKm.toFixed(1) }} km
+            </p>
+            <p
+                v-if="distanceKm !== null && distanceKm > 50"
+                class="text-[11px] text-amber-600 dark:text-amber-400"
+            >
+                Trips over 50km may require higher offers to attract riders.
+            </p>
+            <details
+                v-if="fareBreakdown"
+                class="mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
+            >
+                <summary class="cursor-pointer select-none font-semibold text-slate-700 dark:text-slate-200">
+                    How pricing works
+                </summary>
+                <div class="mt-1 space-y-0.5">
+                    <p>Base fare: ₱{{ fareBreakdown.base_fare.toFixed(0) }}</p>
+                    <p>Per km: ₱{{ fareBreakdown.per_km_rate.toFixed(0) }}</p>
+                    <p>Distance: {{ fareBreakdown.distance.toFixed(1) }} km</p>
+                    <p>Computed fare: ₱{{ fareBreakdown.computed_fare.toFixed(0) }}</p>
+                    <p>Minimum fare: ₱{{ fareBreakdown.minimum_fare.toFixed(0) }}</p>
+                    <p v-if="fareBreakdown.multiplier && fareBreakdown.multiplier !== 1">
+                        Multiplier: ×{{ fareBreakdown.multiplier.toFixed(2) }}
+                        <span v-if="fareBreakdown.adjustment_label">({{ fareBreakdown.adjustment_label }})</span>
+                    </p>
+                    <p class="font-semibold">
+                        Final fare: ₱{{ fareBreakdown.final_fare.toFixed(0) }}
+                    </p>
+                </div>
+            </details>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, computed, watch } from 'vue';
 import api from '@/api/axios';
 import { useFeedStore } from '@/stores/feedStore';
 import MapPickupDropoff from '@/components/MapPickupDropoff.vue';
@@ -178,6 +280,44 @@ const extra = reactive({
 
 const parcelPhotoFile = ref(null);
 
+const estimatedFare = ref(null);
+const fareBreakdown = ref(null);
+
+const totalToPay = computed(() => {
+    if (estimatedFare.value == null) return null;
+    const reward = form.price_offer ?? 0;
+    const total = Math.max(estimatedFare.value, reward);
+    return Math.round(total);
+});
+
+const distanceKm = computed(() => {
+    if (!fareBreakdown.value || fareBreakdown.value.distance == null) return null;
+    return Number(fareBreakdown.value.distance);
+});
+
+const surgeMultiplierNotice = computed(() => {
+    if (!fareBreakdown.value) return '';
+    const m = Number(fareBreakdown.value.multiplier ?? 1);
+    if (!m || m <= 1) return '';
+    const percent = Math.round((m - 1) * 100);
+    const label = fareBreakdown.value.adjustment_label || `Busy time (${percent}% increase)`;
+    return `Busy time: fares include a ${percent}% peak adjustment (${label}).`;
+});
+
+const previewTitle = computed(() => {
+    const type = String(form.type || '').toLowerCase();
+    switch (type) {
+        case 'ride':
+            return '🛵 Ride request';
+        case 'parcel':
+            return '📦 Parcel delivery request';
+        case 'food':
+            return '🍔 Food pasabay request';
+        default:
+            return 'Request';
+    }
+});
+
 function onPickupChanged(payload) {
     form.pickup_location = payload.address;
     form.pickup_lat = payload.lat;
@@ -194,6 +334,33 @@ function onParcelPhotoChange(event) {
     const [file] = event.target.files || [];
     parcelPhotoFile.value = file || null;
 }
+
+watch(
+    () => [form.type, form.pickup_lat, form.pickup_lng, form.dropoff_lat, form.dropoff_lng],
+    async ([type, plat, plng, dlat, dlng]) => {
+        // Reset when data is incomplete
+        if (!type || plat == null || plng == null || dlat == null || dlng == null) {
+            estimatedFare.value = null;
+            fareBreakdown.value = null;
+            return;
+        }
+
+        try {
+            const { data } = await api.post('/fare/estimate', {
+                type,
+                pickup_lat: plat,
+                pickup_lng: plng,
+                dropoff_lat: dlat,
+                dropoff_lng: dlng,
+            });
+            estimatedFare.value = data.estimated_fare ?? data.fare?.final_fare ?? null;
+            fareBreakdown.value = data.fare ?? null;
+        } catch (_e) {
+            estimatedFare.value = null;
+            fareBreakdown.value = null;
+        }
+    },
+);
 
 async function handleSubmit() {
     error.value = '';
